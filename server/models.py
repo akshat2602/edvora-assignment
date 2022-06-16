@@ -9,14 +9,17 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: Union[str, None] = None
+    hashed_password: Union[str, None] = None
 
 
 class User(BaseModel):
     username: str
-    email: Union[str, None] = None
-    full_name: Union[str, None] = None
-    disabled: Union[bool, None] = None
 
 
 class UserInDB(User):
     hashed_password: str
+
+
+class UserRequest(BaseModel):
+    username: str
+    password: str
