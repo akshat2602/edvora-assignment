@@ -6,8 +6,8 @@ from fastapi import Depends, HTTPException, status
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
 
-from database.conn import get_user
-from models import TokenData
+from database.crud import get_user
+from database.schemas import TokenData
 
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 ALGORITHM = "HS256"
@@ -21,19 +21,24 @@ credentials_exception = HTTPException(
     headers={"WWW-Authenticate": "Bearer"},
 )
 
+
 # OAuth2 scheme for FastAPI
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
+
 # Password context for hashing passwords
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 # Verify password
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
+
 # Get password hash
 def get_password_hash(password):
     return pwd_context.hash(password)
+
 
 # Check if user exists and password is correct
 def authenticate_user(username: str, password: str):
@@ -43,6 +48,7 @@ def authenticate_user(username: str, password: str):
     if not verify_password(password, user.hashed_password):
         return False
     return user
+
 
 # Create access token
 def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None):
@@ -54,6 +60,7 @@ def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
 
 # Get current user for the JWT token
 async def get_current_user(token: str = Depends(oauth2_scheme)):

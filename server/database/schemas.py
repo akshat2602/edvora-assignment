@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Union
+from typing import Union, List
 
 
 class Token(BaseModel):
@@ -12,9 +12,16 @@ class TokenData(BaseModel):
     hashed_password: Union[str, None] = None
 
 
-class User(BaseModel):
+class UserBase(BaseModel):
     username: str
 
 
-class UserInDB(User):
+class UserCreate(UserBase):
     hashed_password: str
+
+
+class User(UserBase):
+    id: int
+
+    class Config:
+        orm_mode = True
