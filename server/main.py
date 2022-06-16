@@ -1,10 +1,10 @@
 from datetime import timedelta
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.security import OAuth2PasswordRequestForm
 
 from utils import ACCESS_TOKEN_EXPIRE_MINUTES, authenticate_user, create_access_token, get_current_user, get_password_hash
-from models import User, Token, UserRequest
+from models import User, Token
 
 app = FastAPI()
 
@@ -31,8 +31,8 @@ def ping():
 
 
 @app.post("/login", response_model=Token)
-async def login_for_access_token(req: UserRequest):
-    user = authenticate_user(req.username, req.password)
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
