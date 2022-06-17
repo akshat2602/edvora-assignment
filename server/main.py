@@ -2,12 +2,11 @@ from datetime import timedelta
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
 
-from utils import ACCESS_TOKEN_EXPIRE_MINUTES, authenticate_user, create_access_token, get_current_user, SECRET_KEY, ALGORITHM, oauth2_scheme
+from utils import ACCESS_TOKEN_EXPIRE_MINUTES, authenticate_user, create_access_token, get_current_user, SECRET_KEY, ALGORITHM, oauth2_scheme, get_db
 from database.schemas import Token, UserBase
-from database.conn import SessionLocal, engine
-from database.crud import blacklist_token
+from database.conn import engine
+from database.crud import blacklist_token, add_access_token_to_db
 import database.models as models
 
 
@@ -50,6 +49,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
+    add_access_token_to_db(get_db(), access_token, user.username)
     return {"access_token": access_token, "token_type": "bearer"}
 
 
