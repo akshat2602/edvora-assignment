@@ -1,5 +1,6 @@
+from datetime import datetime
 from pydantic import BaseModel
-from typing import Union, List
+from typing import Union
 
 
 class Token(BaseModel):
@@ -10,6 +11,12 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     username: Union[str, None] = None
     hashed_password: Union[str, None] = None
+
+
+class UserToken(Token):
+    id: int
+    blacklisted: bool
+    created_at: datetime
 
 
 class UserBase(BaseModel):

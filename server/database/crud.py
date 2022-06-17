@@ -1,15 +1,29 @@
 from sqlalchemy.orm import Session
 
-
 from . import models, schemas
 
-def get_user(db: Session, user_id: int):
-    return db.query(models.User).filter(models.User.id == user_id).first()
+
+def get_user(db: Session, username: str):
+    return db.query(models.User).filter(models.User.username == username).first()
 
 
 def create_user(db: Session, user: schemas.UserCreate):
-    db_user = models.User(email=user.email, hashed_password=user.hashed_password)
+    db_user = models.User(username=user.username, hashed_password=user.hashed_password)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     return db_user
+
+
+def check_token_authenticity(db: Session, token: str):
+    db_token = db.query(models.User_Token).filter(models.User_Token.token == token, models.User_Token.blacklisted == False).first()
+    if not db_token:
+        return False
+    return True
+
+
+def blacklist_token(db: Session, token: str):
+    db_token = db.query(models.User_Token).filter(models.User_Token.token == token).first()
+    db_token.blacklisted = True
+    db.commit()
+    return

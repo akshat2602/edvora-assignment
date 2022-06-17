@@ -4,24 +4,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from utils import ACCESS_TOKEN_EXPIRE_MINUTES, authenticate_user, create_access_token, get_current_user
+from utils import ACCESS_TOKEN_EXPIRE_MINUTES, authenticate_user, create_access_token, get_current_user, SECRET_KEY, ALGORITHM, oauth2_scheme
 from database.schemas import Token, UserBase
 from database.conn import SessionLocal, engine
+from database.crud import blacklist_token
 import database.models as models
 
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-
-
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 origins = [
@@ -56,11 +48,23 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         )
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.username + " " + user.hashed_password}, expires_delta=access_token_expires
+        data={"sub": user.username}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
 
+@app.post("/logout")
+async def logout_access_token(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+        blacklist_token(payload)
+    except JWTError:
+        raise credentials_exception
+
+
 @app.get("/users/me", response_model=UserBase)
-async def read_users_me(current_user: UserBase = Depends(get_current_user)):
+async def read_current_user(current_user: UserBase = Depends(get_current_user)):
     return current_user
